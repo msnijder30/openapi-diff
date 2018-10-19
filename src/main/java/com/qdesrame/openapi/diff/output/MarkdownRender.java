@@ -1,8 +1,34 @@
 package com.qdesrame.openapi.diff.output;
 
-import com.qdesrame.openapi.diff.model.*;
+import static java.lang.String.format;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.qdesrame.openapi.diff.model.ChangedApiResponse;
+import com.qdesrame.openapi.diff.model.ChangedContent;
+import com.qdesrame.openapi.diff.model.ChangedHeader;
+import com.qdesrame.openapi.diff.model.ChangedHeaders;
+import com.qdesrame.openapi.diff.model.ChangedMediaType;
+import com.qdesrame.openapi.diff.model.ChangedOneOfSchema;
+import com.qdesrame.openapi.diff.model.ChangedOpenApi;
+import com.qdesrame.openapi.diff.model.ChangedOperation;
+import com.qdesrame.openapi.diff.model.ChangedOperationMetadata;
+import com.qdesrame.openapi.diff.model.ChangedParameter;
+import com.qdesrame.openapi.diff.model.ChangedParameters;
+import com.qdesrame.openapi.diff.model.ChangedResponse;
+import com.qdesrame.openapi.diff.model.ChangedSchema;
+import com.qdesrame.openapi.diff.model.DiffContext;
+import com.qdesrame.openapi.diff.model.Endpoint;
+import com.qdesrame.openapi.diff.model.ListDiff;
 import com.qdesrame.openapi.diff.utils.RefPointer;
 import com.qdesrame.openapi.diff.utils.RefType;
+
 import io.swagger.v3.oas.models.headers.Header;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.ComposedSchema;
@@ -10,15 +36,8 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
-
-import static java.lang.String.format;
+import lombok.Getter;
+import lombok.Setter;
 
 public class MarkdownRender implements Render {
 
@@ -36,6 +55,9 @@ public class MarkdownRender implements Render {
     protected final String LI = "* ";
     protected final String HR = "---\n";
     protected ChangedOpenApi diff;
+    
+    @Getter @Setter
+    protected boolean showChangedMetadata;
 
     public MarkdownRender() {
     }
@@ -73,6 +95,10 @@ public class MarkdownRender implements Render {
         changedOperations.stream().map(operation -> {
             StringBuilder details = new StringBuilder()
                     .append(itemEndpoint(operation.getHttpMethod().toString(), operation.getPathUrl(), operation.getSummary()));
+            
+            if(isShowChangedMetadata() && operation.isChangedOperationMetadata().isDifferent()) {
+                details.append(titleH5("Metadata:")).append(operationMetadata(operation.getChangedOperationMetadata()));
+            }
             if (operation.isChangedParam().isDifferent()) {
                 details.append(titleH5("Parameters:")).append(parameters(operation.getChangedParameters()));
             }
@@ -85,6 +111,18 @@ public class MarkdownRender implements Render {
             return details.toString();
         }).forEach(sb::append);
         return sb.toString();
+    }
+    
+    protected String operationMetadata(ChangedOperationMetadata changedOperationMetadata) {
+        StringBuilder sb = new StringBuilder("\n");
+        
+        sb.append(formatMetadata("Changed summary", changedOperationMetadata.getSummary()));
+        sb.append(formatMetadata("Changed description", changedOperationMetadata.getDescription()));
+        return sb.toString();
+    }
+    
+    protected String formatMetadata(String name, String changed) {
+        return format("%s : `%s`\n\n", name, changed);
     }
 
     protected String responses(ChangedApiResponse changedApiResponse) {

@@ -15,12 +15,14 @@ public class ChangedOperation implements Changed {
     private Operation oldOperation;
     private Operation newOperation;
     private String summary;
+    private String description;
     private boolean deprecated;
     private ChangedParameters changedParameters;
     private ChangedRequestBody changedRequestBody;
     private ChangedApiResponse changedApiResponse;
     private ChangedSecurityRequirements changedSecurityRequirements;
     private ChangedExtensions changedExtensions;
+    private ChangedOperationMetadata changedOperationMetadata;
 
     public ChangedOperation(String pathUrl, PathItem.HttpMethod httpMethod, Operation oldOperation, Operation newOperation) {
         this.httpMethod = httpMethod;
@@ -34,15 +36,19 @@ public class ChangedOperation implements Changed {
         //TODO BETTER HANDLING FOR DEPRECIATION
         if (!deprecated && isChangedParam().isUnchanged() && isChangedRequest().isUnchanged()
                 && isChangedResponse().isUnchanged() && isChangedSecurity().isUnchanged()
-                && ChangedUtils.isUnchanged(changedExtensions)) {
+                && ChangedUtils.isUnchanged(changedExtensions) && isChangedOperationMetadata().isUnchanged()) {
             return DiffResult.NO_CHANGES;
         }
         if (isChangedParam().isCompatible() && isChangedRequest().isCompatible()
                 && isChangedResponse().isCompatible() && isChangedSecurity().isCompatible()
-                && ChangedUtils.isCompatible(changedExtensions)) {
+                && ChangedUtils.isCompatible(changedExtensions) && isChangedOperationMetadata().isCompatible()) {
             return DiffResult.COMPATIBLE;
         }
         return DiffResult.INCOMPATIBLE;
+    }
+    
+    public DiffResult isChangedOperationMetadata() {
+        return changedOperationMetadata == null ? DiffResult.NO_CHANGES : changedOperationMetadata.isChanged();
     }
 
     public DiffResult isChangedParam() {

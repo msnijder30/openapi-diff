@@ -56,6 +56,10 @@ public class MarkdownRender implements Render {
     protected final String HR = "---\n";
     protected ChangedOpenApi diff;
     
+    /**
+     * A paramater which indicates whether or not metadata (summary and description) 
+     * changes should be logged in the changelog file.
+     */
     @Getter @Setter
     protected boolean showChangedMetadata;
 
@@ -116,13 +120,20 @@ public class MarkdownRender implements Render {
     protected String operationMetadata(ChangedOperationMetadata changedOperationMetadata) {
         StringBuilder sb = new StringBuilder("\n");
         
-        sb.append(formatMetadata("Changed summary", changedOperationMetadata.getSummary()));
-        sb.append(formatMetadata("Changed description", changedOperationMetadata.getDescription()));
+        if(changedOperationMetadata.isSummaryChanged()) {
+            sb.append(formatMetadata("Changed summary", changedOperationMetadata.getOldSummary(), 
+                    changedOperationMetadata.getSummary()));
+        }
+        if(changedOperationMetadata.isDescriptionChanged()) {
+            sb.append(formatMetadata("Changed description", changedOperationMetadata.getOldDescription(), 
+                    changedOperationMetadata.getDescription()));
+        }
+
         return sb.toString();
     }
     
-    protected String formatMetadata(String name, String changed) {
-        return format("%s : `%s`\n\n", name, changed);
+    protected String formatMetadata(String name, String oldValue, String newValue) {
+        return format("%s : `%s` to: \n> `%s`\n\n", name, oldValue, newValue);
     }
 
     protected String responses(ChangedApiResponse changedApiResponse) {

@@ -52,11 +52,8 @@ public class OperationDiff {
         openApiDiff.getExtensionsDiff().diff(oldOperation.getExtensions(), newOperation.getExtensions(), context)
                 .ifPresent(changedOperation::setChangedExtensions);
 
-
         openApiDiff.getOperationMetadataDiff().diff(oldOperation, newOperation, context)
                 .ifPresent(changedOperation::setChangedOperationMetadata);
-        
-//        openApiDiff.getDescriptiveDiff().diff(oldOperation, newOperation, context);
 
         return isChanged(changedOperation);
     }
